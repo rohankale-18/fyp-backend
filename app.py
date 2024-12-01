@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import joblib
-import numpy as np
+import pandas as pd
 
 # Load the saved model
 model = joblib.load("predictive_model.pkl")
@@ -16,10 +16,18 @@ class ModelInput(BaseModel):
     Temperature: float
     Vmax: float
 
+
+# Define the feature names used during training
+feature_names = ['RMS Voltage', 'Humidity', 'Temperature', 'Peak Voltage']
+
 # Define a prediction endpoint
 @app.post("/predict")
 def predict(input_data: ModelInput):
-    # Convert input data to NumPy array
-    features = np.array([[input_data.Vrms, input_data.Humidity, input_data.Temperature, input_data.Vmax]])
-    prediction = model.predict(features)
+    # Create a DataFrame with the correct feature names
+    input_df = pd.DataFrame([[input_data.Vrms, input_data.Humidity, input_data.Temperature, input_data.Vmax]],
+                            columns=feature_names)
+    
+    # Perform prediction
+    prediction = model.predict(input_df)
+    
     return {"prediction": prediction.tolist()}
